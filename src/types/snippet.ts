@@ -1,3 +1,5 @@
+import { Pageination } from "./pagination";
+
 export interface SnippetInput {
   id?: number;
   title: string;
@@ -27,6 +29,10 @@ export interface SnippetShortResponse {
   tags: string[];
 }
 
+export interface SnippetPageination extends Pageination {
+  details: SnippetShortResponse[];
+}
+
 export enum Languages {
   JavaScript = "javascript",
   TypeScript = "typescript",
@@ -46,4 +52,4 @@ export enum Languages {
   C = "c",
   Cpp = "cpp",
   Assembly = "assembly",
-  }
+}

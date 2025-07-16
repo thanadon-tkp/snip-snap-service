@@ -7,6 +7,7 @@ import {
   SnippetResponse,
   Languages,
   SnippetShortResponse,
+  SnippetPageination,
 } from "../types/snippet";
 
 export const createSnippet = async (
@@ -86,24 +87,28 @@ export const getSnippetById = async (
   }
 };
 export const getSnippetByUserId = async (
-  userId: number
-): Promise<SnippetShortResponse[]> => {
+  userId: number,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<SnippetPageination> => {
   try {
-    const snippet = await prisma.snippet.findMany({
+    const snippets = await prisma.snippet.findMany({
       where: {
         userId: userId,
       },
-      take: 10,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       orderBy: {
         createdAt: "desc",
       },
     });
+    const count = await prisma.snippet.count({ where: { userId: userId } });
 
-    if (!snippet) {
+    if (!snippets) {
       throw { status: 400, message: "Snippet not found." };
     }
 
-    const result: SnippetShortResponse[] = snippet.map((s) => ({
+    const details: SnippetShortResponse[] = snippets.map((s) => ({
       id: s.id,
       createdAt: s.createdAt.toISOString(),
       updatedAt: s.updatedAt.toISOString(),
@@ -112,7 +117,17 @@ export const getSnippetByUserId = async (
       tags: s.tags,
     }));
 
-    return result;
+    return {
+      page: page,
+      pageSize: pageSize,
+      totalItems: count,
+      totalPages: Math.ceil(count / pageSize),
+      hasNextPage: page * pageSize < count,
+      hasPreviousPage: page > 1,
+      nextPage: page * pageSize < count ? page + 1 : null,
+      previousPage: page > 1 ? page - 1 : null,
+      details,
+    };
   } catch (err) {
     throw { status: 400, message: err };
   }

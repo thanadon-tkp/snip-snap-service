@@ -1,56 +1,51 @@
 import { prisma } from "../prisma/client";
+import { handlePrismaError } from "../utils/errorHandler";
 
 // type
-import { Snippet } from "@prisma/client";
-import {
-  SnippetInput,
-  SnippetResponse,
-  Languages,
-  SnippetShortResponse,
-  SnippetPageination,
-} from "../types/snippet";
+import { SnippetInput } from "../types/snippet";
 
-export const createSnippet = async (
-  snippet: SnippetInput
-): Promise<SnippetResponse> => {
+export const createSnippet = async (snippetInput: SnippetInput) => {
   try {
-    const res = await prisma.snippet.create({
+    return await prisma.snippet.create({
       data: {
-        title: snippet.title,
-        description: snippet.description,
-        code: snippet.code,
-        language: snippet.language,
-        tags: snippet.tags,
+        title: snippetInput.title,
+        description: snippetInput.description,
+        code: snippetInput.code,
+        language: snippetInput.language,
+        tags: snippetInput.tags,
         user: {
           connect: {
-            id: snippet.userId,
+            id: snippetInput.userId,
           },
         },
       },
+      omit: {
+        userId: true,
+      },
     });
-
-    return convertToSnippetResponse(res);
   } catch (err) {
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
 };
-export const updateSnippet = async (snippet: SnippetInput) => {
+export const updateSnippet = async (snippetInput: SnippetInput) => {
   try {
-    const res = await prisma.snippet.update({
+    return await prisma.snippet.update({
       where: {
-        id: snippet.id,
+        id: snippetInput.id,
       },
       data: {
-        title: snippet.title,
-        description: snippet.description,
-        code: snippet.code,
-        language: snippet.language,
-        tags: snippet.tags,
+        title: snippetInput.title,
+        description: snippetInput.description,
+        code: snippetInput.code,
+        language: snippetInput.language,
+        tags: snippetInput.tags,
+      },
+      omit: {
+        userId: true,
       },
     });
-    return convertToSnippetResponse(res);
   } catch (err) {
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
 };
 export const deleteSnippet = async (snippetId: number, userId: number) => {
@@ -62,35 +57,29 @@ export const deleteSnippet = async (snippetId: number, userId: number) => {
       },
     });
   } catch (err) {
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
 };
-export const getSnippetById = async (
-  snippetId: number,
-  userId: number
-): Promise<SnippetResponse> => {
+export const getSnippetById = async (snippetId: number, userId: number) => {
   try {
-    const snippet = await prisma.snippet.findFirst({
+    return await prisma.snippet.findFirst({
       where: {
         id: snippetId,
         userId: userId,
       },
+      omit: {
+        userId: true,
+      },
     });
-
-    if (!snippet) {
-      throw { status: 400, message: "Snippet not found." };
-    }
-
-    return convertToSnippetResponse(snippet as Snippet);
   } catch (err) {
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
 };
 export const getSnippetByUserId = async (
   userId: number,
   page: number = 1,
   pageSize: number = 10
-): Promise<SnippetPageination> => {
+) => {
   try {
     const snippets = await prisma.snippet.findMany({
       where: {
@@ -101,21 +90,13 @@ export const getSnippetByUserId = async (
       orderBy: {
         createdAt: "desc",
       },
+      omit: {
+        userId: true,
+        code: true,
+        description: true,
+      },
     });
     const count = await prisma.snippet.count({ where: { userId: userId } });
-
-    if (!snippets) {
-      throw { status: 400, message: "Snippet not found." };
-    }
-
-    const details: SnippetShortResponse[] = snippets.map((s) => ({
-      id: s.id,
-      createdAt: s.createdAt.toISOString(),
-      updatedAt: s.updatedAt.toISOString(),
-      title: s.title,
-      language: s.language as Languages,
-      tags: s.tags,
-    }));
 
     return {
       page: page,
@@ -126,22 +107,9 @@ export const getSnippetByUserId = async (
       hasPreviousPage: page > 1,
       nextPage: page * pageSize < count ? page + 1 : null,
       previousPage: page > 1 ? page - 1 : null,
-      details,
+      details: snippets,
     };
   } catch (err) {
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
-};
-
-const convertToSnippetResponse = (s: Snippet): SnippetResponse => {
-  return {
-    id: s.id || 0,
-    createdAt: s.createdAt.toISOString(),
-    updatedAt: s.updatedAt.toISOString(),
-    title: s.title,
-    description: s.description,
-    code: s.code,
-    language: s.language as Languages,
-    tags: s.tags,
-  };
 };

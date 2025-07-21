@@ -9,29 +9,6 @@ export interface SnippetInput {
   tags: string[];
   userId: number;
 }
-export interface SnippetResponse {
-  id: number;
-  createdAt: string;
-  updatedAt: string;
-  title: string;
-  description: string | null;
-  code: string;
-  language: Languages;
-  tags: string[];
-}
-
-export interface SnippetShortResponse {
-  id: number;
-  createdAt: string;
-  updatedAt: string;
-  title: string;
-  language: Languages;
-  tags: string[];
-}
-
-export interface SnippetPageination extends Pageination {
-  details: SnippetShortResponse[];
-}
 
 export enum Languages {
   JavaScript = "javascript",

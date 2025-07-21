@@ -1,10 +1,11 @@
-import { prisma, PrismaClientKnownRequestError } from "../prisma/client";
+import { prisma } from "../prisma/client";
 import { hashPassword, comparePassword } from "../utils/hash";
 import {
   signAccessToken,
   signRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt";
+import { handlePrismaError } from "../utils/errorHandler";
 // types
 import { SignUp, JwtPayload } from "../types/auth";
 import { CreateUserRequest } from "../types/user";
@@ -18,14 +19,7 @@ export const createUser = async (user: CreateUserRequest) => {
 
     return { message: "Created successfully" };
   } catch (err) {
-    if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
-      throw {
-        status: 409,
-        message: "Email already existss",
-      };
-    }
-
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
 };
 
@@ -60,7 +54,7 @@ export const login = async (credentials: SignUp) => {
       refresh_token,
     };
   } catch (err) {
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
 };
 
@@ -73,6 +67,6 @@ export const refreshToken = async (token: string) => {
       access_token,
     };
   } catch (err) {
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
 };

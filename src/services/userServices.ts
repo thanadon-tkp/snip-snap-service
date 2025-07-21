@@ -1,21 +1,17 @@
 import { prisma } from "../prisma/client";
+import { handlePrismaError } from "../utils/errorHandler";
 
 export const getUserById = async (id: number) => {
   try {
-    const user = await prisma.user.findFirst({
+    return await prisma.user.findFirst({
       where: {
         id,
       },
+      omit: {
+        password: true,
+      },
     });
-
-    const result = {
-      ...user,
-    };
-
-    delete result?.password;
-
-    return result;
   } catch (err) {
-    throw { status: 400, message: err };
+    handlePrismaError(err);
   }
 };

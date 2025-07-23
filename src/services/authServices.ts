@@ -30,7 +30,12 @@ export const login = async (credentials: SignUp) => {
       where: { email: credentials.email },
     });
 
-    if (!user) throw (new Error().message = "Invalid email or password");
+    if (!user) {
+      throw {
+        status: 400,
+        message: "Invalid email or password",
+      };
+    }
 
     // check password
     const isCompare = await comparePassword(
@@ -38,7 +43,12 @@ export const login = async (credentials: SignUp) => {
       user.password
     );
 
-    if (!isCompare) throw (new Error().message = "Invalid email or password");
+    if (!isCompare) {
+      throw {
+        status: 400,
+        message: "Invalid email or password",
+      };
+    }
 
     // genarate token
     const payload: JwtPayload = {

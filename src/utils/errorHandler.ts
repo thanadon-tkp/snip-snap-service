@@ -61,5 +61,5 @@ export const handlePrismaError = (error: unknown) => {
     };
   }
 
-  throw { status: 500, message: "Internal Server Error" };
+  throw error
 };

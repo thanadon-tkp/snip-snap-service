@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import * as snippetServices from "../services/snippetServices";
 import { z } from "zod";
-import { SnippetInput, Languages } from "../types/snippet";
+import { Languages } from "../types/snippet";
 
 export const getSnippetById = async (req: Request, res: Response) => {
   const userId = req.user?.id;
@@ -18,7 +18,7 @@ export const getSnippetById = async (req: Request, res: Response) => {
   }
 
   const snippet = await snippetServices.getSnippetById(snippetId, userId);
-  return res.status(200).json({
+  res.status(200).json({
     message: "Successfully.",
     data: snippet,
   });
@@ -32,7 +32,7 @@ export const getSnippetByUser = async (req: Request, res: Response) => {
   }
 
   const snippets = await snippetServices.getSnippetByUserId(userId);
-  return res.status(200).json({
+  res.status(200).json({
     message: "Successfully.",
     data: snippets,
   });
@@ -50,8 +50,9 @@ export const postCreateSnippet = async (req: Request, res: Response) => {
     description: z.string().nullable(),
     code: z.string(),
     language: z.enum(Languages),
-    tags: z.array(z.string()).optional().default([]),
+    tags: z.array(z.string()).default([]),
     userId: z.number().default(userId),
+    isPublic: z.boolean().default(false),
   });
   const result = snippetSchema.safeParse(req.body);
   if (!result.success) {
@@ -59,10 +60,9 @@ export const postCreateSnippet = async (req: Request, res: Response) => {
       message: JSON.parse(result.error.message),
     });
   }
-  const data: SnippetInput = result.data;
-
-  const snippet = await snippetServices.createSnippet(data);
-  return res.status(201).json({
+  // create snippet
+  const snippet = await snippetServices.createSnippet(result.data);
+  res.status(201).json({
     message: "Snippet created successfully.",
     data: snippet,
   });
@@ -77,12 +77,12 @@ export const putUpdateSnippet = async (req: Request, res: Response) => {
   // validate
   const snippetSchema = z.object({
     id: z.number(),
-    title: z.string(),
-    description: z.string().nullable(),
-    code: z.string(),
-    language: z.enum(Languages),
-    tags: z.array(z.string()).optional().default([]),
-    userId: z.number().default(userId),
+    title: z.string().optional(),
+    description: z.string().nullable().optional(),
+    code: z.string().optional(),
+    language: z.enum(Languages).optional(),
+    tags: z.array(z.string()).optional(),
+    isPublic: z.boolean().optional(),
   });
   const result = snippetSchema.safeParse(req.body);
   if (!result.success) {
@@ -90,10 +90,11 @@ export const putUpdateSnippet = async (req: Request, res: Response) => {
       message: JSON.parse(result.error.message),
     });
   }
-  const data: SnippetInput = result.data;
+  // destructure id and data
+  const { id, ...data } = result.data;
 
-  const snippet = await snippetServices.updateSnippet(data);
-  return res.status(200).json({
+  const snippet = await snippetServices.updateSnippet(id, data);
+  res.status(200).json({
     message: "Snippet updated successfully.",
     data: snippet,
   });
@@ -114,7 +115,7 @@ export const deleteSnippet = async (req: Request, res: Response) => {
   }
 
   await snippetServices.deleteSnippet(snippetId, userId);
-  return res.status(200).json({
+  res.status(200).json({
     message: "Snippet deleted successfully.",
   });
 };

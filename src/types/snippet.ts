@@ -1,13 +1,12 @@
-import { Pageination } from "./pagination";
-
-export interface SnippetInput {
-  id?: number;
+export interface Snippet {
+  id: number;
   title: string;
   description: string | null;
   code: string;
   language: Languages;
   tags: string[];
   userId: number;
+  isPublic: boolean;
 }
 
 export enum Languages {

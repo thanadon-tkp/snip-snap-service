@@ -2,20 +2,21 @@ import { prisma } from "../prisma/client";
 import { handlePrismaError } from "../utils/errorHandler";
 
 // type
-import { SnippetInput } from "../types/snippet";
+import type { Snippet } from "../types/snippet";
 
-export const createSnippet = async (snippetInput: SnippetInput) => {
+export const createSnippet = async (snippet: Omit<Snippet, "id">) => {
   try {
     return await prisma.snippet.create({
       data: {
-        title: snippetInput.title,
-        description: snippetInput.description,
-        code: snippetInput.code,
-        language: snippetInput.language,
-        tags: snippetInput.tags,
+        title: snippet.title,
+        description: snippet.description,
+        code: snippet.code,
+        language: snippet.language,
+        tags: snippet.tags,
+        isPublic: snippet.isPublic,
         user: {
           connect: {
-            id: snippetInput.userId,
+            id: snippet.userId,
           },
         },
       },
@@ -27,19 +28,16 @@ export const createSnippet = async (snippetInput: SnippetInput) => {
     handlePrismaError(err);
   }
 };
-export const updateSnippet = async (snippetInput: SnippetInput) => {
+export const updateSnippet = async (
+  snippetId: number,
+  update: Partial<Omit<Snippet, "id" | "userId">>
+) => {
   try {
     return await prisma.snippet.update({
       where: {
-        id: snippetInput.id,
+        id: snippetId,
       },
-      data: {
-        title: snippetInput.title,
-        description: snippetInput.description,
-        code: snippetInput.code,
-        language: snippetInput.language,
-        tags: snippetInput.tags,
-      },
+      data: update,
       omit: {
         userId: true,
       },
